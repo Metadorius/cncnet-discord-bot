@@ -3,11 +3,9 @@ import os.path
 import asyncio
 import logging
 
-from configparser import ConfigParser
 from irc_client import IRCClient
-# from discord_client import DiscordClient
 from discord.ext import commands
-
+from typing import *
 from data_classes import *
 from discord_utils import *
 
@@ -27,7 +25,7 @@ class DiscordCnCNetBot(object):
 
         self.event_loop = event_loop if event_loop else asyncio.new_event_loop()
 
-        self.hosted_games = {}
+        self.hosted_games: Dict[str, GameMessagePair] = {}
 
         self.irc_client = IRCClient(
             nickname=self.config.irc_name,
@@ -66,13 +64,37 @@ class DiscordCnCNetBot(object):
 
             try:
                 hosted_game = HostedGame(contents, CnCNetGame(self.config.game_name, self.config.game_icon_url, self.config.game_url))
+                
                 if hosted_game.is_closed:
-                    self.hosted_games.pop(sender, None)
+                    if sender in self.hosted_games:
+                        # if we have it in game list - remove the message and the game
+                        if msg := self.hosted_games[sender].message:
+                            await msg.delete()
+                        self.hosted_games.pop(sender, None)
+
                 else:
-                    self.hosted_games[sender] = hosted_game
-                    logging.info(f"{sender} has broadcasted a {hosted_game.display_name} game in {channel}")
+                    if sender in self.hosted_games:
+                        # update the message if already listed
+                        self.hosted_games[sender].game = hosted_game
+                        if list_id := self.config.discord_list_channel:
+                            if msg := self.hosted_games[sender].message:
+                                await msg.edit(embed=hosted_game.get_embed(host=sender))
+                            else:
+                                # if for some reason it wasn't sent - send it
+                                list_channel = self.discord_client.get_channel(list_id)
+                                self.hosted_games[sender].message = await list_channel.send(embed=hosted_game.get_embed(host=sender))
+                    else:
+                        # post a new message in the list channel and announce the game (if channels are set)
+                        self.hosted_games[sender] = GameMessagePair(hosted_game)
+                        if list_id := self.config.discord_list_channel:
+                            list_channel = self.discord_client.get_channel(list_id)
+                            self.hosted_games[sender].message = await list_channel.send(embed=hosted_game.get_embed(host=sender))
+                        if announce_id := self.config.discord_announce_channel:
+                            announce_channel = self.discord_client.get_channel(announce_id)
+                            await announce_channel.send(f"Hey people, a new game has been hosted!")
+                    
             except Exception as e:
-                logging.warning(f"Got error when parsing game message: {e}")
+                logging.warning(f"Got error when parsing game message: {e.message}")
 
 
     def setup_discord_client(self):
@@ -101,6 +123,7 @@ class DiscordCnCNetBot(object):
 
             response = f"The value for key `{key}` is now `{value}`. "
             await ctx.send(response)
+
 
     def run(self):
         try:

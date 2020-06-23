@@ -1,8 +1,8 @@
 import json
+import discord
 
 from distutils.util import strtobool
 from typing import List
-from discord import Embed, Colour
 from datetime import datetime
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
@@ -36,8 +36,6 @@ class BotConfig(object):
     def write_to_file(self, json_path):
         with open(json_path, 'w') as json_file:
             json.dump(self.to_dict(), json_file, indent=4)
-
-
 
 @dataclass
 class CnCNetGame(object):
@@ -111,17 +109,16 @@ class HostedGame(object):
         self.loaded_game_id: str = split[10]
         self.is_ra2_mode: bool = bool(strtobool(split[11])) if 11 < len(split) else False
 
-    def get_embed(self, host: str = None) -> Embed:
+    def get_embed(self, host: str = None) -> discord.Embed:
         """Returns hosted game information formatted as embed in form of discord.py Embed instance."""
 
-        embed: Embed = Embed(
+        embed: discord.Embed = discord.Embed(
             title=self.display_name,
             # colour=Colour(0xd5d7da),
             description=f"[{self.game.name}]({self.game.site_url})",
             timestamp=self.timestamp
         )
 
-        embed.set_thumbnail_image(url=self.game.icon_url)
         embed.set_thumbnail(url=self.game.icon_url)
         if host:
             embed.set_author(name=host, icon_url=self.game.icon_url)
@@ -134,3 +131,10 @@ class HostedGame(object):
         # TODO write rest of the stuff
 
         return embed
+
+@dataclass
+class GameMessagePair(object):
+    """A class which stores a hosted game and a corresponding Discord embed message."""
+
+    game: HostedGame
+    message: discord.Message = None
