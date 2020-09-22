@@ -5,6 +5,7 @@ import logging
 
 from irc_client import IRCClient
 from discord.ext import commands
+from discord.ext.commands import has_permissions
 from typing import *
 from data_classes import *
 from discord_utils import *
@@ -55,7 +56,7 @@ class DiscordCnCNetBot(object):
             trimmed_msg = message[3:]
             if self.config.discord_message_channel:
                 msg_channel = self.discord_client.get_channel(self.config.discord_message_channel)
-                await msg_channel.send(f"**<{sender}>** {trimmed_msg}")
+                await msg_channel.send(f"**`<{sender}>`** {trimmed_msg}")
 
         @self.irc_client.event_handler
         async def on_ctcp_game_reply(sender, channel, contents):
@@ -76,6 +77,7 @@ class DiscordCnCNetBot(object):
                     if sender in self.hosted_games:
                         # update the message if already listed
                         self.hosted_games[sender].game = hosted_game
+
                         if list_id := self.config.discord_list_channel:
                             if msg := self.hosted_games[sender].message:
                                 await msg.edit(embed=hosted_game.get_embed(host=sender))
@@ -86,12 +88,13 @@ class DiscordCnCNetBot(object):
                     else:
                         # post a new message in the list channel and announce the game (if channels are set)
                         self.hosted_games[sender] = GameMessagePair(hosted_game)
+
                         if list_id := self.config.discord_list_channel:
                             list_channel = self.discord_client.get_channel(list_id)
                             self.hosted_games[sender].message = await list_channel.send(embed=hosted_game.get_embed(host=sender))
                         if announce_id := self.config.discord_announce_channel:
                             announce_channel = self.discord_client.get_channel(announce_id)
-                            await announce_channel.send(f"Hey people, a new game has been hosted!")
+                            await announce_channel.send(self.config.discord_announce_message)
                     
             except Exception as e:
                 logging.warning(f"Got error when parsing game message: {e.message}")
@@ -104,25 +107,33 @@ class DiscordCnCNetBot(object):
             if (self.config.irc_lobby_channel and
                 message.author != self.discord_client.user and
                 message.channel.id == self.config.discord_message_channel):
+
                 await self.irc_client.message(self.config.irc_lobby_channel, f"<{message.author}> {message.content}")
 
             await self.discord_client.process_commands(message)
 
         @self.discord_client.command()
-        async def config(ctx, key, value):
-            if key == "discord_prefix":
-                self.config.discord_prefix = value
-            elif key == "discord_message_channel":
+        @has_permissions(administrator=True)
+        async def config(context, key, value):
+            """Sets certain config variables via a chat command."""
+
+            # if key == "discord_prefix":
+            #     self.config.discord_prefix = value
+            if key == "discord_message_channel":
                 self.config.discord_message_channel = parse_channel(value)
             elif key == "discord_announce_channel":
                 self.config.discord_announce_channel = parse_channel(value)
             elif key == "discord_list_channel":
                 self.config.discord_list_channel = parse_channel(value)
+            elif key == "discord_announce_message":
+                self.config.discord_announce_message = value
             else:
                 return
 
+            self.config.write_to_file(self.config_path)
+
             response = f"The value for key `{key}` is now `{value}`. "
-            await ctx.send(response)
+            await context.send(response)
 
 
     def run(self):
@@ -140,8 +151,10 @@ class DiscordCnCNetBot(object):
 
             logging.info(f"Running main loop")
             self.event_loop.run_forever()
+
         except KeyboardInterrupt:
             logging.info(f"Caught interrupt")
+
         finally:
             logging.info(f"Finishing and cleaning up")
             self.event_loop.run_until_complete(asyncio.gather(

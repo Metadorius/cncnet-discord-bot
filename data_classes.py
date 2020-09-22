@@ -22,6 +22,8 @@ class BotConfig(object):
     discord_list_channel: int = None
     discord_message_channel: int = None
 
+    discord_announce_message: str = "Hey people, a new game has been hosted!"
+
     irc_host: str = 'irc.gamesurge.net'
     irc_port: int = 6667
     irc_name: str = 'discord_bot'
@@ -47,7 +49,7 @@ class CnCNetGame(object):
 
 class NotConfiguredException(Exception):
     """An exception that is thrown when the bot hasn't been configured."""
-    def __init__(self, msg="Bot config file wasn't confgiured", *args, **kwargs):
+    def __init__(self, msg="Bot wasn't confgiured via the config file.", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
 
 
@@ -74,9 +76,8 @@ class HostedGame(object):
     players: List[str]
     map_name: str
     game_mode: str
-    tunnel_address: str
+    tunnel_address_and_port: str
     loaded_game_id: str
-    is_ra2_mode: bool = False
 
     def __init__(self, command_contents: str, game: CnCNetGame):
         self.parse_message_string(command_contents)
@@ -89,7 +90,7 @@ class HostedGame(object):
 
         split: List[str] = command_contents.split(';')
 
-        if (len(split) < 11 or len(split) > 12):
+        if (len(split) != 11):
             raise ParseException('The provided string has invalid amount of parameters')
 
         self.protocol_version: str = split[0]
@@ -105,9 +106,8 @@ class HostedGame(object):
         self.players: List[str] = split[6].split(',')
         self.map_name: str = split[7]
         self.game_mode: str = split[8]
-        self.tunnel_address: str = split[9]
+        self.tunnel_address_and_port: str = split[9]
         self.loaded_game_id: str = split[10]
-        self.is_ra2_mode: bool = bool(strtobool(split[11])) if 11 < len(split) else False
 
     def get_embed(self, host: str = None) -> discord.Embed:
         """Returns hosted game information formatted as embed in form of discord.py Embed instance."""
@@ -124,9 +124,10 @@ class HostedGame(object):
             embed.set_author(name=host, icon_url=self.game.icon_url)
         # embed.set_footer(text="footer text", icon_url="https://cdn.discordapp.com/embed/avatars/0.png")
 
-        embed.add_field(name="🎮Game mode", value=self.game_mode, inline=True)
-        embed.add_field(name="🗺Map", value=self.map_name, inline=True)
-        embed.add_field(name="🔢Game version", value=self.game_version, inline=True)
+        embed.add_field(name="🎮 Game mode", value=self.game_mode, inline=True)
+        embed.add_field(name="🗺 Map", value=self.map_name, inline=True)
+        embed.add_field(name="🔢 Game version", value=self.game_version, inline=True)
+        embed.add_field(name="🧍 Players", value="\n".join(self.players), inline=False)
 
         # TODO write rest of the stuff
 
