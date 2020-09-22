@@ -109,7 +109,7 @@ class DiscordCnCNetBot(object):
             await self.discord_client.process_commands(message)
 
         @self.discord_client.command()
-        async def config(ctx, key, value):
+        async def config(context, key, value):
             if key == "discord_prefix":
                 self.config.discord_prefix = value
             elif key == "discord_message_channel":
@@ -122,7 +122,7 @@ class DiscordCnCNetBot(object):
                 return
 
             response = f"The value for key `{key}` is now `{value}`. "
-            await ctx.send(response)
+            await context.send(response)
 
 
     def run(self):

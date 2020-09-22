@@ -47,7 +47,7 @@ class CnCNetGame(object):
 
 class NotConfiguredException(Exception):
     """An exception that is thrown when the bot hasn't been configured."""
-    def __init__(self, msg="Bot config file wasn't confgiured", *args, **kwargs):
+    def __init__(self, msg="Bot wasn't confgiured via the config file.", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
 
 
@@ -76,7 +76,6 @@ class HostedGame(object):
     game_mode: str
     tunnel_address: str
     loaded_game_id: str
-    is_ra2_mode: bool = False
 
     def __init__(self, command_contents: str, game: CnCNetGame):
         self.parse_message_string(command_contents)
@@ -89,7 +88,7 @@ class HostedGame(object):
 
         split: List[str] = command_contents.split(';')
 
-        if (len(split) < 11 or len(split) > 12):
+        if (len(split) != 11):
             raise ParseException('The provided string has invalid amount of parameters')
 
         self.protocol_version: str = split[0]
@@ -107,7 +106,6 @@ class HostedGame(object):
         self.game_mode: str = split[8]
         self.tunnel_address: str = split[9]
         self.loaded_game_id: str = split[10]
-        self.is_ra2_mode: bool = bool(strtobool(split[11])) if 11 < len(split) else False
 
     def get_embed(self, host: str = None) -> discord.Embed:
         """Returns hosted game information formatted as embed in form of discord.py Embed instance."""
