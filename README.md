@@ -1,5 +1,5 @@
 # CnCNet Discord Bot
-A single-server-per-instance bot to forward messages back and forth between CnCNet v5 IRC game channel and announce games.
+A single-server-per-instance bot to forward messages back and forth between CnCNet v5 IRC game channels, announce and list games in dedicated Discord channels. Will work with any game that uses [XNA CnCNet Client](https://github.com/CnCNet/xna-cncnet-client).
 
 
 Features
@@ -27,8 +27,8 @@ Setting up
 Credits
 -------
 
-- Kerbiter aka Metadorius - project author
-- Rampastring and CnCNet team - protocol for game broadcasting at CnCNet IRC
+- **Kerbiter** aka **Metadorius** - project author
+- **Rampastring** and **CnCNet** team - XNA CnCNet Client without which this bot probably wouldn't exist
 
 
 
