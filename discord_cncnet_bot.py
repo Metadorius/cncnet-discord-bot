@@ -69,8 +69,10 @@ class DiscordCnCNetBot(object):
                 if hosted_game.is_closed:
                     if sender in self.hosted_games:
                         # if we have it in game list - remove the message and the game
-                        if msg := self.hosted_games[sender].message:
+                        if self.hosted_games[sender].message:
+                            msg = self.hosted_games[sender].message
                             await msg.delete()
+
                         self.hosted_games.pop(sender, None)
 
                 else:
@@ -78,9 +80,13 @@ class DiscordCnCNetBot(object):
                         # update the message if already listed
                         self.hosted_games[sender].game = hosted_game
 
-                        if list_id := self.config.discord_list_channel:
-                            if msg := self.hosted_games[sender].message:
+                        if self.config.discord_list_channel:
+                            list_id = self.config.discord_list_channel
+
+                            if self.hosted_games[sender].message:
+                                msg = self.hosted_games[sender].message
                                 await msg.edit(embed=hosted_game.get_embed(host=sender))
+
                             else:
                                 # if for some reason it wasn't sent - send it
                                 list_channel = self.discord_client.get_channel(list_id)
@@ -89,10 +95,13 @@ class DiscordCnCNetBot(object):
                         # post a new message in the list channel and announce the game (if channels are set)
                         self.hosted_games[sender] = GameMessagePair(hosted_game)
 
-                        if list_id := self.config.discord_list_channel:
+                        if self.config.discord_list_channel:
+                            list_id = self.config.discord_list_channel
                             list_channel = self.discord_client.get_channel(list_id)
                             self.hosted_games[sender].message = await list_channel.send(embed=hosted_game.get_embed(host=sender))
-                        if announce_id := self.config.discord_announce_channel:
+                            
+                        if self.config.discord_announce_channel:
+                            announce_id = self.config.discord_announce_channel
                             announce_channel = self.discord_client.get_channel(announce_id)
                             await announce_channel.send(self.config.discord_announce_message)
                     
