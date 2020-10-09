@@ -2,6 +2,7 @@ import discord
 import os.path
 import asyncio
 import logging
+import signal
 
 from irc_client import IRCClient
 from discord.ext import commands
@@ -173,8 +174,9 @@ class DiscordCnCNetBot(object):
 
             self.config.write_to_file(self.config_path)
 
-
+            
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal.default_int_handler)
     logging.basicConfig(level=logging.INFO)
     bot = DiscordCnCNetBot()
     bot.run()
