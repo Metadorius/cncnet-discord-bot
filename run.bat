@@ -1,4 +1,4 @@
 call Scripts\activate.bat
-pip install -r requirements.txt
-python discord_cncnet_bot.py
+python3 -m pip install -r requirements.txt
+python3 discord_cncnet_bot.py
 pause
