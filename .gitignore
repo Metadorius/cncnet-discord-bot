@@ -129,7 +129,5 @@ dmypy.json
 .pyre/
 
 config.json
-
-pyvenv.cfg
-
-Scripts/
+bot.log
+env/
