@@ -2,4 +2,4 @@
 
 cd ..
 
-pkill -signal SIGINT discord_cncnet_bot.py
+pkill -f --signal INT discord_cncnet_bot.py
