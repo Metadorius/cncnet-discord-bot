@@ -17,7 +17,7 @@ Setting up
 
 1. Go to [Discord developer portal](https://discord.com/developers/applications/), create and configure your bot application, then invite it to your server.
 2. Clone this repo via `git clone` or just download it via zip archive and unpack to the folder of your choice.
-3. With **Python 3.7** or newer installed run `python3 -m venv /path/to/bot/folder` to create a virtual environment where all the needed packages and the interpreter for the bot will be located.
+3. With **Python 3.6** or newer installed run `setup.bat` (Windows) / `setup.sh` (\*nix with Bash) from `Scripts` folder to create a virtual environment where all the needed packages and the interpreter for the bot will be located.
 4. Run `run.bat` (Windows) / `run.sh` (\*nix with Bash) which activates the installed virtual environment, installs packages and runs the bot. The bot should terminate and generate an example `config.json` file.
 5. Open the generated `config.json`, enter your bot application token (see step 1), change other config variables to accomodate your IRC channels and preferences (channel variables are set from Discord, don't try to change them manually.)
 6. Run the script again (see step 4). The bot should connect to IRC and Discord.
