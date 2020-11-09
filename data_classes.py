@@ -19,11 +19,11 @@ class BotConfig(object):
 
     discord_token: str = ''
     discord_prefix: str = '!'
-    discord_announce_channel: int = None
+    # discord_announce_channel: int = None
     discord_list_channel: int = None
     discord_message_channel: int = None
 
-    discord_announce_message: str = "Hey people, a new game has been hosted!"
+    # discord_announce_message: str = "Hey people, a new game has been hosted!"
 
     irc_host: str = 'irc.gamesurge.net'
     irc_port: int = 6667

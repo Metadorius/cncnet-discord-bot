@@ -104,10 +104,10 @@ class DiscordCnCNetBot(object):
                             self.hosted_games[sender].message = await list_channel.send(
                                 embed=hosted_game.get_embed(host=sender))
                             
-                        if self.config.discord_announce_channel:
-                            announce_id = self.config.discord_announce_channel
-                            announce_channel = self.discord_client.get_channel(announce_id)
-                            await announce_channel.send(self.config.discord_announce_message)
+                        # if self.config.discord_announce_channel:
+                        #     announce_id = self.config.discord_announce_channel
+                        #     announce_channel = self.discord_client.get_channel(announce_id)
+                        #     await announce_channel.send(self.config.discord_announce_message)
                     
             except Exception as e:
                 logging.warning(f"Got error when parsing game message: {e.message}")
@@ -134,8 +134,8 @@ class DiscordCnCNetBot(object):
             #     self.config.discord_prefix = value
             if key == "discord_message_channel":
                 self.config.discord_message_channel = parse_channel(value)
-            elif key == "discord_announce_channel":
-                self.config.discord_announce_channel = parse_channel(value)
+            # elif key == "discord_announce_channel":
+            #     self.config.discord_announce_channel = parse_channel(value)
             elif key == "discord_list_channel":
                 self.config.discord_list_channel = parse_channel(value)
             elif key == "discord_announce_message":
@@ -180,7 +180,6 @@ class DiscordCnCNetBot(object):
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.default_int_handler)
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARN)
     bot = DiscordCnCNetBot()
     bot.run()
-
