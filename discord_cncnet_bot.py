@@ -43,16 +43,12 @@ class DiscordCnCNetBot(object):
             loop=self.event_loop)
         self.setup_discord_client()
 
-        # set up tasks
-        schedule_task_periodically(GAME_TIMEOUT, self.cleanup_obsolete_games)
-
 
     async def cleanup_obsolete_games(self):
-        for sender, game in self.hosted_games:
-            if (datetime.now() - game.timestamp).seconds > GAME_TIMEOUT:
+        for sender, pair in self.hosted_games.items():
+            if (datetime.now() - pair.game.timestamp).seconds > GAME_TIMEOUT:
                 try:
-                    msg = self.hosted_games[sender].message
-                    await msg.delete()
+                    await pair.message.delete()
                     self.hosted_games.pop(sender, None)
                 except:
                     pass
@@ -179,6 +175,8 @@ class DiscordCnCNetBot(object):
 
             self.event_loop.create_task(self.discord_client.start(
                 self.config.discord_token))
+
+            schedule_task_periodically(GAME_TIMEOUT, self.cleanup_obsolete_games, self.event_loop)
 
             logging.info(f"Running main loop")
             self.event_loop.run_forever()

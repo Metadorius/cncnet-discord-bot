@@ -133,7 +133,7 @@ class HostedGame(object):
         embed.add_field(name="🎮 Game mode", value=self.game_mode, inline=True)
         embed.add_field(name="🗺 Map", value=self.map_name, inline=True)
         # embed.add_field(name="🔢 Version", value=self.game_version, inline=True)
-        embed.add_field(name=f"🧍 Players ({self.players} / {self.max_players})", value="\n".join(self.players), inline=True)
+        embed.add_field(name=f"🧍 Players ({len(self.players)} / {self.max_players})", value="\n".join(self.players), inline=True)
 
         # TODO write rest of the stuff
 

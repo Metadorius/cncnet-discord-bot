@@ -16,15 +16,16 @@ async def run_periodically(wait_time, coro, *args):
         await asyncio.sleep(wait_time)
 
 
-def schedule_task_periodically(wait_time, coro, *args):
+def schedule_task_periodically(wait_time, coro, event_loop, *args):
     """
     Schedule a coroutine to run periodically as an asyncio.Task
     :param wait_time: interval (in seconds)
     :param coro: the coroutine that will be run
+    :param event_loop: the event loop used
     :param args: any args needed to be provided to coro
     :return: an asyncio Task that has been scheduled to run
     """
-    return asyncio.create_task(run_periodically(wait_time, coro, *args))
+    return event_loop.create_task(run_periodically(wait_time, coro, *args))
 
 
 async def cancel_scheduled_task(task):
