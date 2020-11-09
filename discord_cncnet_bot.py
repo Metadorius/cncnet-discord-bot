@@ -10,6 +10,10 @@ from discord.ext.commands import has_permissions
 from typing import *
 from data_classes import *
 from discord_utils import *
+from utils import *
+
+
+GAME_TIMEOUT = 35
 
 
 class DiscordCnCNetBot(object):
@@ -40,6 +44,21 @@ class DiscordCnCNetBot(object):
         self.setup_discord_client()
 
 
+    async def cleanup_obsolete_games(self):
+        to_remove = []
+
+        for sender in self.hosted_games:
+            if (datetime.now() - self.hosted_games[sender].game.timestamp).seconds > GAME_TIMEOUT:
+                to_remove.append(sender)
+
+        for sender in to_remove:
+            try:
+                await self.hosted_games[sender].message.delete()
+                self.hosted_games.pop(sender, None)
+            except:
+                pass
+
+
     def setup_irc_client(self):
 
         @self.irc_client.event_handler
@@ -65,7 +84,8 @@ class DiscordCnCNetBot(object):
             logging.info("Received a CTCP GAME message")
 
             try:
-                hosted_game = HostedGame(contents, CnCNetGame(self.config.game_name, self.config.game_icon_url, self.config.game_url))
+                hosted_game = HostedGame(contents,
+                    CnCNetGame(self.config.game_name, self.config.game_icon_url, self.config.game_url))
                 
                 if hosted_game.is_closed:
                     if sender in self.hosted_games:
@@ -84,14 +104,15 @@ class DiscordCnCNetBot(object):
                         if self.config.discord_list_channel:
                             list_id = self.config.discord_list_channel
 
-                            if self.hosted_games[sender].message:
+                            try:
                                 msg = self.hosted_games[sender].message
                                 await msg.edit(embed=hosted_game.get_embed(host=sender))
 
-                            else:
-                                # if for some reason it wasn't sent - send it
+                            except discord.errors.NotFound:
+                                # if for some reason it wasn't found - send it
                                 list_channel = self.discord_client.get_channel(list_id)
-                                self.hosted_games[sender].message = await list_channel.send(embed=hosted_game.get_embed(host=sender))
+                                self.hosted_games[sender].message = await list_channel.send(
+                                    embed=hosted_game.get_embed(host=sender))
                     else:
                         # post a new message in the list channel and announce the game (if channels are set)
                         self.hosted_games[sender] = GameMessagePair(hosted_game)
@@ -99,12 +120,13 @@ class DiscordCnCNetBot(object):
                         if self.config.discord_list_channel:
                             list_id = self.config.discord_list_channel
                             list_channel = self.discord_client.get_channel(list_id)
-                            self.hosted_games[sender].message = await list_channel.send(embed=hosted_game.get_embed(host=sender))
+                            self.hosted_games[sender].message = await list_channel.send(
+                                embed=hosted_game.get_embed(host=sender))
                             
-                        if self.config.discord_announce_channel:
-                            announce_id = self.config.discord_announce_channel
-                            announce_channel = self.discord_client.get_channel(announce_id)
-                            await announce_channel.send(self.config.discord_announce_message)
+                        # if self.config.discord_announce_channel:
+                        #     announce_id = self.config.discord_announce_channel
+                        #     announce_channel = self.discord_client.get_channel(announce_id)
+                        #     await announce_channel.send(self.config.discord_announce_message)
                     
             except Exception as e:
                 logging.warning(f"Got error when parsing game message: {e.message}")
@@ -131,8 +153,8 @@ class DiscordCnCNetBot(object):
             #     self.config.discord_prefix = value
             if key == "discord_message_channel":
                 self.config.discord_message_channel = parse_channel(value)
-            elif key == "discord_announce_channel":
-                self.config.discord_announce_channel = parse_channel(value)
+            # elif key == "discord_announce_channel":
+            #     self.config.discord_announce_channel = parse_channel(value)
             elif key == "discord_list_channel":
                 self.config.discord_list_channel = parse_channel(value)
             elif key == "discord_announce_message":
@@ -159,6 +181,8 @@ class DiscordCnCNetBot(object):
             self.event_loop.create_task(self.discord_client.start(
                 self.config.discord_token))
 
+            schedule_task_periodically(GAME_TIMEOUT, self.cleanup_obsolete_games, self.event_loop)
+
             logging.info(f"Running main loop")
             self.event_loop.run_forever()
 
@@ -174,9 +198,9 @@ class DiscordCnCNetBot(object):
 
             self.config.write_to_file(self.config_path)
 
-            
+
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.default_int_handler)
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARN)
     bot = DiscordCnCNetBot()
     bot.run()
