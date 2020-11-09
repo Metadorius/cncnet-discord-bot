@@ -65,7 +65,8 @@ class DiscordCnCNetBot(object):
             logging.info("Received a CTCP GAME message")
 
             try:
-                hosted_game = HostedGame(contents, CnCNetGame(self.config.game_name, self.config.game_icon_url, self.config.game_url))
+                hosted_game = HostedGame(contents,
+                    CnCNetGame(self.config.game_name, self.config.game_icon_url, self.config.game_url))
                 
                 if hosted_game.is_closed:
                     if sender in self.hosted_games:
@@ -84,14 +85,15 @@ class DiscordCnCNetBot(object):
                         if self.config.discord_list_channel:
                             list_id = self.config.discord_list_channel
 
-                            if self.hosted_games[sender].message:
+                            try:
                                 msg = self.hosted_games[sender].message
                                 await msg.edit(embed=hosted_game.get_embed(host=sender))
 
-                            else:
-                                # if for some reason it wasn't sent - send it
+                            except discord.errors.NotFound:
+                                # if for some reason it wasn't found - send it
                                 list_channel = self.discord_client.get_channel(list_id)
-                                self.hosted_games[sender].message = await list_channel.send(embed=hosted_game.get_embed(host=sender))
+                                self.hosted_games[sender].message = await list_channel.send(
+                                    embed=hosted_game.get_embed(host=sender))
                     else:
                         # post a new message in the list channel and announce the game (if channels are set)
                         self.hosted_games[sender] = GameMessagePair(hosted_game)
@@ -99,7 +101,8 @@ class DiscordCnCNetBot(object):
                         if self.config.discord_list_channel:
                             list_id = self.config.discord_list_channel
                             list_channel = self.discord_client.get_channel(list_id)
-                            self.hosted_games[sender].message = await list_channel.send(embed=hosted_game.get_embed(host=sender))
+                            self.hosted_games[sender].message = await list_channel.send(
+                                embed=hosted_game.get_embed(host=sender))
                             
                         if self.config.discord_announce_channel:
                             announce_id = self.config.discord_announce_channel
@@ -174,9 +177,10 @@ class DiscordCnCNetBot(object):
 
             self.config.write_to_file(self.config_path)
 
-            
+
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.default_int_handler)
     logging.basicConfig(level=logging.INFO)
     bot = DiscordCnCNetBot()
     bot.run()
+
