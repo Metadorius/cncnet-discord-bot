@@ -10,6 +10,10 @@ from discord.ext.commands import has_permissions
 from typing import *
 from data_classes import *
 from discord_utils import *
+from utils import *
+
+
+GAME_TIMEOUT = 35
 
 
 class DiscordCnCNetBot(object):
@@ -38,6 +42,20 @@ class DiscordCnCNetBot(object):
             command_prefix=self.config.discord_prefix,
             loop=self.event_loop)
         self.setup_discord_client()
+
+        # set up tasks
+        schedule_task_periodically(GAME_TIMEOUT, self.cleanup_obsolete_games)
+
+
+    async def cleanup_obsolete_games(self):
+        for sender, game in self.hosted_games:
+            if (datetime.now() - game.timestamp).seconds > GAME_TIMEOUT:
+                try:
+                    msg = self.hosted_games[sender].message
+                    await msg.delete()
+                    self.hosted_games.pop(sender, None)
+                except:
+                    pass
 
 
     def setup_irc_client(self):
