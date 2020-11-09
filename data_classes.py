@@ -13,6 +13,7 @@ from dataclasses_json import dataclass_json
 class BotConfig(object):
 
     game_name: str = 'CnCNet game'
+    game_short_name: str = ''
     game_url: str = 'https://cncnet.org'
     game_icon_url: str = 'https://avatars0.githubusercontent.com/u/11489929?s=200&v=4'
 
@@ -112,22 +113,27 @@ class HostedGame(object):
     def get_embed(self, host: str = None) -> discord.Embed:
         """Returns hosted game information formatted as embed in form of discord.py Embed instance."""
 
+        embed_title = self.display_name
+        if self.is_locked:
+            embed_title += "🔒"
+        if self.is_passworded:
+            embed_title += "🔑"
+
         embed: discord.Embed = discord.Embed(
-            title=self.display_name,
+            title=embed_title,
             # colour=Colour(0xd5d7da),
-            description=f"[{self.game.name}]({self.game.site_url})",
-            timestamp=self.timestamp
+            description=f"[{self.game.name}]({self.game.site_url}) {self.game_version}"
         )
 
         embed.set_thumbnail(url=self.game.icon_url)
         if host:
-            embed.set_author(name=host, icon_url=self.game.icon_url)
+            embed.set_author(name=host)
         # embed.set_footer(text="footer text", icon_url="https://cdn.discordapp.com/embed/avatars/0.png")
 
         embed.add_field(name="🎮 Game mode", value=self.game_mode, inline=True)
         embed.add_field(name="🗺 Map", value=self.map_name, inline=True)
-        embed.add_field(name="🔢 Game version", value=self.game_version, inline=True)
-        embed.add_field(name="🧍 Players", value="\n".join(self.players), inline=False)
+        # embed.add_field(name="🔢 Version", value=self.game_version, inline=True)
+        embed.add_field(name=f"🧍 Players ({self.players} / {self.max_players})", value="\n".join(self.players), inline=True)
 
         # TODO write rest of the stuff
 
