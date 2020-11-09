@@ -45,13 +45,18 @@ class DiscordCnCNetBot(object):
 
 
     async def cleanup_obsolete_games(self):
-        for sender, pair in self.hosted_games.items():
-            if (datetime.now() - pair.game.timestamp).seconds > GAME_TIMEOUT:
-                try:
-                    await pair.message.delete()
-                    self.hosted_games.pop(sender, None)
-                except:
-                    pass
+        to_remove = []
+
+        for sender in self.hosted_games:
+            if (datetime.now() - self.hosted_games[sender].game.timestamp).seconds > GAME_TIMEOUT:
+                to_remove.append(sender)
+
+        for sender in to_remove:
+            try:
+                await self.hosted_games[sender].message.delete()
+                self.hosted_games.pop(sender, None)
+            except:
+                pass
 
 
     def setup_irc_client(self):
