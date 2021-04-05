@@ -14,6 +14,7 @@ from utils import *
 
 
 GAME_TIMEOUT = 35
+UPDATE_INTERVAL = 30
 
 
 class DiscordCnCNetBot(object):
@@ -43,6 +44,29 @@ class DiscordCnCNetBot(object):
             loop=self.event_loop)
         self.setup_discord_client()
 
+        self.irc_user_count_cache: int = 0
+        # self.discord_user_count_cache: int = 0
+
+        self.event_handlers = {}
+
+        super().__init__(*args, **kwargs)
+
+
+    def event_handler(self, f):
+        self.event_handlers[f.__name__] = f
+        return f
+
+
+    async def update_online_counts(self):
+        self.irc_user_count_cache = len(self.irc_client.channels[self.config.irc_lobby_channel].users)
+        self.event_handlers["on_online_count_update"](self)
+
+
+    @self.event_handler
+    async def on_online_count_update(self):
+        self.discord_client.change_presence(
+            activity=discord.Activity(type=discord.ActivityType.watching, name=f"{self.config.game_short_name} | {self.irc_user_count_cache} players"))
+
 
     async def cleanup_obsolete_games(self):
         to_remove = []
@@ -57,6 +81,20 @@ class DiscordCnCNetBot(object):
                 self.hosted_games.pop(sender, None)
             except:
                 pass
+
+
+    async def retrieve_game_message(self, sender, hosted_game):
+
+        list_id = self.config.discord_list_channel
+        list_channel = self.discord_client.get_channel(list_id)
+
+        msg = await list_channel.send(embed=hosted_game.get_embed(host=sender))
+
+        if not msg:
+            # workaround for when the message is sent but discord returns 503
+            msg = await list_channel.history().find(lambda m: m.author == self.discord_client.user and m.embed.author.name == sender)
+
+        return msg
 
 
     def setup_irc_client(self):
@@ -104,8 +142,6 @@ class DiscordCnCNetBot(object):
                         self.hosted_games[sender].game = hosted_game
 
                         if self.config.discord_list_channel:
-                            list_id = self.config.discord_list_channel
-
                             try:
                                 msg = self.hosted_games[sender].message
                                 if not msg:
@@ -117,18 +153,14 @@ class DiscordCnCNetBot(object):
 
                             except discord.errors.NotFound:
                                 # if for some reason it wasn't found - send it
-                                list_channel = self.discord_client.get_channel(list_id)
-                                self.hosted_games[sender].message = await list_channel.send(
-                                    embed=hosted_game.get_embed(host=sender))
+                                self.hosted_games[sender].message = await self.retrieve_game_message(sender, hosted_game)
+                                    
                     else:
                         # post a new message in the list channel and announce the game (if channels are set)
                         self.hosted_games[sender] = GameMessagePair(hosted_game)
 
                         if self.config.discord_list_channel:
-                            list_id = self.config.discord_list_channel
-                            list_channel = self.discord_client.get_channel(list_id)
-                            self.hosted_games[sender].message = await list_channel.send(
-                                embed=hosted_game.get_embed(host=sender))
+                            self.hosted_games[sender].message = await self.retrieve_game_message(sender, hosted_game)
                             
                         # if self.config.discord_announce_channel:
                         #     announce_id = self.config.discord_announce_channel
@@ -136,7 +168,7 @@ class DiscordCnCNetBot(object):
                         #     await announce_channel.send(self.config.discord_announce_message)
                     
             except Exception as e:
-                logging.warning(f"Got error when parsing game message: {e.message}")
+                logging.error(e, exc_info=True)
 
 
     def setup_discord_client(self):
@@ -150,6 +182,7 @@ class DiscordCnCNetBot(object):
                 await self.irc_client.message(self.config.irc_lobby_channel, f"<{message.author}> {message.content}")
 
             await self.discord_client.process_commands(message)
+
 
         @self.discord_client.command()
         @has_permissions(administrator=True)
@@ -189,6 +222,7 @@ class DiscordCnCNetBot(object):
                 self.config.discord_token))
 
             schedule_task_periodically(GAME_TIMEOUT, self.cleanup_obsolete_games, self.event_loop)
+            schedule_task_periodically(UPDATE_INTERVAL, self.update_online_counts, self.event_loop)
 
             logging.info(f"Running main loop")
             self.event_loop.run_forever()
