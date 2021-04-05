@@ -72,11 +72,9 @@ class DiscordCnCNetBot(object):
             if sender == self.irc_client.nickname:
                 return
 
-            # clean up some garbo
-            trimmed_msg = message[3:]
             if self.config.discord_message_channel:
                 msg_channel = self.discord_client.get_channel(self.config.discord_message_channel)
-                await msg_channel.send(f"**`<{sender}>`** {trimmed_msg}")
+                await msg_channel.send(f"**`<{sender}>`** {message}")
 
         @self.irc_client.event_handler
         async def on_ctcp_game_reply(sender, channel, contents):
