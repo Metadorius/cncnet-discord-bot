@@ -87,7 +87,7 @@ class HostedGame(object):
     def parse_message_string(self, command_contents: str):
         """Parses CTCP GAME command message that's broadcasted by XNA client when the game is hosted."""
 
-        self.timestamp = datetime.now()
+        self.timestamp = datetime.utcnow()
 
         split: List[str] = command_contents.split(';')
 

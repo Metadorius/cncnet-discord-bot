@@ -48,12 +48,12 @@ class DiscordCnCNetBot(object):
         to_remove = []
 
         for sender in self.hosted_games:
-            if (datetime.now() - self.hosted_games[sender].game.timestamp).seconds > GAME_TIMEOUT:
+            if (datetime.utcnow() - self.hosted_games[sender].game.timestamp).seconds > GAME_TIMEOUT:
                 to_remove.append(sender)
 
         for sender in to_remove:
             try:
-                await self.hosted_games[sender].message.delete()
+                await self.hosted_games[sender].message.edit(embed=None, content=f"A game hosted by **`<{sender}>`** was abandoned.")
                 self.hosted_games.pop(sender, None)
             except:
                 pass
@@ -94,7 +94,7 @@ class DiscordCnCNetBot(object):
                         # if we have it in game list - remove the message and the game
                         if self.hosted_games[sender].message:
                             msg = self.hosted_games[sender].message
-                            await msg.delete()
+                            await msg.edit(embed=None, content=f"A game hosted by **`<{sender}>`** was abandoned.")
 
                         self.hosted_games.pop(sender, None)
 
