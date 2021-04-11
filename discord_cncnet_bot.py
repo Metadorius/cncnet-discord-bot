@@ -19,7 +19,7 @@ UPDATE_INTERVAL = 30
 
 class DiscordCnCNetBot(object):
 
-    def __init__(self, config_path: str = 'config.json', event_loop=None):
+    def __init__(self, config_path: str = 'config.json', event_loop=None, *args, **kwargs):
         self.config_path = config_path
 
         if os.path.isfile(self.config_path):
@@ -34,6 +34,8 @@ class DiscordCnCNetBot(object):
 
         self.hosted_games: Dict[str, GameMessagePair] = {}
 
+        self.setup_event_handlers()
+
         self.irc_client = IRCClient(
             nickname=self.config.irc_name,
             eventloop=self.event_loop)
@@ -47,8 +49,6 @@ class DiscordCnCNetBot(object):
         self.irc_user_count_cache: int = 0
         # self.discord_user_count_cache: int = 0
 
-        self.event_handlers = {}
-
         super().__init__(*args, **kwargs)
 
 
@@ -58,14 +58,21 @@ class DiscordCnCNetBot(object):
 
 
     async def update_online_counts(self):
-        self.irc_user_count_cache = len(self.irc_client.channels[self.config.irc_lobby_channel].users)
-        self.event_handlers["on_online_count_update"](self)
+        channel = self.irc_client.channels.get(self.config.irc_lobby_channel, None)
+        if not channel:
+            return
+
+        self.irc_user_count_cache = len(channel["users"])
+        await self.event_handlers["on_online_count_update"](self)
 
 
-    @self.event_handler
-    async def on_online_count_update(self):
-        self.discord_client.change_presence(
-            activity=discord.Activity(type=discord.ActivityType.watching, name=f"{self.config.game_short_name} | {self.irc_user_count_cache} players"))
+    def setup_event_handlers(self):
+        self.event_handlers = {}
+
+        @self.event_handler
+        async def on_online_count_update(self):
+            g = discord.Game(f"{len(self.hosted_games)} games | {self.irc_user_count_cache} players")
+            await self.discord_client.change_presence(activity=g)
 
 
     async def cleanup_obsolete_games(self):
@@ -84,7 +91,6 @@ class DiscordCnCNetBot(object):
 
 
     async def retrieve_game_message(self, sender, hosted_game):
-
         list_id = self.config.discord_list_channel
         list_channel = self.discord_client.get_channel(list_id)
 
@@ -145,9 +151,7 @@ class DiscordCnCNetBot(object):
                             try:
                                 msg = self.hosted_games[sender].message
                                 if not msg:
-                                    list_channel = self.discord_client.get_channel(list_id)
-                                    self.hosted_games[sender].message = await list_channel.send(
-                                        embed=hosted_game.get_embed(host=sender))
+                                    self.hosted_games[sender].message = await self.retrieve_game_message(sender, hosted_game)
                                 else:
                                     await msg.edit(embed=hosted_game.get_embed(host=sender))
 
@@ -169,6 +173,8 @@ class DiscordCnCNetBot(object):
                     
             except Exception as e:
                 logging.error(e, exc_info=True)
+
+            await self.update_online_counts()
 
 
     def setup_discord_client(self):
@@ -223,6 +229,8 @@ class DiscordCnCNetBot(object):
 
             schedule_task_periodically(GAME_TIMEOUT, self.cleanup_obsolete_games, self.event_loop)
             schedule_task_periodically(UPDATE_INTERVAL, self.update_online_counts, self.event_loop)
+
+            # self.update_online_counts()
 
             logging.info(f"Running main loop")
             self.event_loop.run_forever()
