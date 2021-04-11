@@ -108,7 +108,12 @@ class DiscordCnCNetBot(object):
 
                             try:
                                 msg = self.hosted_games[sender].message
-                                await msg.edit(embed=hosted_game.get_embed(host=sender))
+                                if not msg:
+                                    list_channel = self.discord_client.get_channel(list_id)
+                                    self.hosted_games[sender].message = await list_channel.send(
+                                        embed=hosted_game.get_embed(host=sender))
+                                else:
+                                    await msg.edit(embed=hosted_game.get_embed(host=sender))
 
                             except discord.errors.NotFound:
                                 # if for some reason it wasn't found - send it
