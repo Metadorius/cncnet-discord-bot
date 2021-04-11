@@ -72,6 +72,10 @@ class DiscordCnCNetBot(object):
             if sender == self.irc_client.nickname:
                 return
 
+            # Remove color index from the message
+            if message[0] == '':
+                message = message[3:]
+
             if self.config.discord_message_channel:
                 msg_channel = self.discord_client.get_channel(self.config.discord_message_channel)
                 await msg_channel.send(f"**`<{sender}>`** {message}")
