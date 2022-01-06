@@ -11,6 +11,10 @@ Features
 - Configure channels and announce message from Discord via `!config variable_name`
   - Available variables are `discord_message_channel`, `discord_list_channel`
 
+![Message forwarding](https://media.discordapp.net/attachments/657049724444213248/928410801348435999/unknown.png)
+
+![Game log](https://media.discordapp.net/attachments/657049724444213248/928618596622536734/unknown.png)
+
 
 Setting up
 ----------
