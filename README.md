@@ -27,7 +27,7 @@ Hosting with Heroku
 -------
 1. Complete steps 1-7, and ensure the bot works via the `run.bat` command.
 2. Open Heroku and create a new app.
-3. Remove config.json from the `.gitignore` file (be *Careful* to not upload the token to other external locations, such as github and discord. Discord automatically refreshes it if so but it is better to be safe).
+3. Remove `config.json` from the `.gitignore` file (be *Careful* to not upload the token to other external locations, such as github and discord. Discord automatically refreshes it if so but it is better to be safe).
 4. Create a file called `Procfile` (no file extension) which contains: `worker: python discord_cncnet_bot.py`.   ###Procfile included inside this PR
 5. Install the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) (and `git` if you do not already have it) and use this to follow the deploy instructions on the heroku platform through `git` (instructions are on the lower half of the deploy page).
 6. Go into the `Resources` tab, and you should see a Dyno which is turned off. Edit and Deploy (drag the bar to the right, then confirm). Use a free dyno, as there is no need to pay for one.
