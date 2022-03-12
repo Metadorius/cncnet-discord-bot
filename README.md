@@ -27,18 +27,20 @@ Hosting with Heroku
 -------
 1. Complete steps 1-7, and ensure the bot works via the `run.bat` command.
 2. Open Heroku and create a new app.
-3. Remove config.json from the `.gitignore` file (be *Careful* to not upload the token to other external locations, such as github. Discord automatically refreshes it but it is better to be safe).
-4. Create a file called `Procfile` (no file extension) which contains: `worker: python discord_cncnet_bot.py`.   ###ADD PROCFILE TO THE GITHUB REPO
-5. Install the Heroku CLI (and git if you do not already have it) and follow the deploy instructions on the heroku platform using git (instructions are on the lower half of the deploy page).
-6. Go into the `Resources` tab, and you should see a Dyno. Edit and Deploy (drag the bar to the right, then confirm).
-7. Your bot should appear online.
-8.  :-)
+3. Remove config.json from the `.gitignore` file (be *Careful* to not upload the token to other external locations, such as github and discord. Discord automatically refreshes it if so but it is better to be safe).
+4. Create a file called `Procfile` (no file extension) which contains: `worker: python discord_cncnet_bot.py`.   ###Procfile included inside this PR
+5. Install the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) (and `git` if you do not already have it) and use this to follow the deploy instructions on the heroku platform through `git` (instructions are on the lower half of the deploy page).
+6. Go into the `Resources` tab, and you should see a Dyno which is turned off. Edit and Deploy (drag the bar to the right, then confirm). Use a free dyno, as there is no need to pay for one.
+7. Your bot should appear online, using the settings that you made whilst setting up.
+
+if the bot is not online, **please check**:
+1) The logs (heroku dashboard --> More --> View Logs) to see if there is an error
+2) That the dyno is turned on
+3) The build was deployed succesfully
 
 Credits
 -------
 
 - **Kerbiter** aka **Metadorius** - project author
 - **Rampastring** and **CnCNet** team - XNA CnCNet Client without which this bot probably wouldn't exist
-
-
-
+- **CatTanker** - Heroku Setup Tutorial
